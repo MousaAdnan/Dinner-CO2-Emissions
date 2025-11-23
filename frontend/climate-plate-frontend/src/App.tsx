@@ -63,6 +63,30 @@ const FOOD_FACTS: Record<string, string> = {
 };
 
 function App() {
+    // Helper: CO2 color based on total kg
+    const getCo2Class = (co2: number | null | undefined) => {
+        if (co2 == null) return "bg-[rgb(77,59,63)]"; // neutral
+        if (co2 <= 2) return "bg-green-600";
+        if (co2 <= 5) return "bg-yellow-500";
+        return "bg-red-600";
+    };
+
+// Helper: Water color based on total L
+    const getWaterClass = (water: number | null | undefined) => {
+        if (water == null) return "bg-[rgb(77,59,63)]";
+        if (water <= 100) return "bg-green-600";
+        if (water <= 700) return "bg-yellow-500";
+        return "bg-red-600";
+    };
+
+// Helper: Land color based on total m²
+    const getLandClass = (land: number | null | undefined) => {
+        if (land == null) return "bg-[rgb(77,59,63)]";
+        if (land <= 5) return "bg-green-600";
+        if (land <= 20) return "bg-yellow-500";
+        return "bg-red-600";
+    };
+
     // React state holding which ingredients are selected + their grams
     const [selections, setSelections] = useState<SelectionState>({});
 
@@ -399,38 +423,49 @@ function App() {
 
                     {/* MIDDLE: three big stat bubbles */}
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
-                        <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center">
-              <span className="text-xs uppercase tracking-wide text-slate-300 mb-1">
-                CO₂ cost
-              </span>
+                        {/* CO2 CARD */}
+                        <div
+                            className={`rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center text-slate-100 ${getCo2Class(
+                                backendSummary?.total_co2_kg
+                            )}`}
+                        >
+    <span className="text-xs uppercase tracking-wide text-slate-200 mb-1">
+      CO₂ cost
+    </span>
                             <span className="text-2xl font-semibold">
-                {backendSummary ? backendSummary.total_co2_kg.toFixed(2) : "–"}{" "}
-                                kg
-              </span>
+      {backendSummary ? backendSummary.total_co2_kg.toFixed(2) : "–"} kg
+    </span>
                         </div>
-                        <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center">
-              <span className="text-xs uppercase tracking-wide text-slate-300 mb-1">
-                Water usage
-              </span>
+
+                        {/* WATER CARD */}
+                        <div
+                            className={`rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center text-slate-100 ${getWaterClass(
+                                backendSummary?.total_freshwater_l
+                            )}`}
+                        >
+    <span className="text-xs uppercase tracking-wide text-slate-200 mb-1">
+      Water usage
+    </span>
                             <span className="text-2xl font-semibold">
-                {backendSummary
-                    ? backendSummary.total_freshwater_l.toFixed(1)
-                    : "–"}{" "}
-                                L
-              </span>
+      {backendSummary ? backendSummary.total_freshwater_l.toFixed(1) : "–"} L
+    </span>
                         </div>
-                        <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center">
-              <span className="text-xs uppercase tracking-wide text-slate-300 mb-1">
-                Land usage
-              </span>
+
+                        {/* LAND CARD */}
+                        <div
+                            className={`rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center text-slate-100 ${getLandClass(
+                                backendSummary?.total_land_m2
+                            )}`}
+                        >
+    <span className="text-xs uppercase tracking-wide text-slate-200 mb-1">
+      Land usage
+    </span>
                             <span className="text-2xl font-semibold">
-                {backendSummary
-                    ? backendSummary.total_land_m2.toFixed(2)
-                    : "–"}{" "}
-                                m²
-              </span>
+      {backendSummary ? backendSummary.total_land_m2.toFixed(2) : "–"} m²
+    </span>
                         </div>
                     </div>
+
 
                     {/* LOWER SECTION: side foods + "This means" + fact box */}
                     <div className="mt-6 grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-6 items-start">
