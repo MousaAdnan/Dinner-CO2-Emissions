@@ -47,10 +47,32 @@ type BackendPlateSummary = {
     items: BackendPlateItem[];
 };
 
+const FOOD_FACTS: Record<string, string> = {
+    Beef:
+        "Beef typically has one of the highest CO₂ footprints per gram of protein.",
+    Chicken:
+        "Chicken usually has less climate impact than beef but more than most plants.",
+    Fish:
+        "Fish can be lower in emissions than red meat, but it depends a lot on how it’s caught or farmed.",
+    Rice:
+        "Rice paddies emit methane, a powerful greenhouse gas, especially in flooded fields.",
+    Potato:
+        "Potatoes are a relatively low-emission source of carbohydrates compared to many grains.",
+    Bread:
+        "Bread’s impact mostly comes from growing and processing wheat, plus baking energy.",
+    Eggs:
+        "Eggs have a moderate climate impact, lower than beef and cheese per gram of protein.",
+    Peas:
+        "Peas and other legumes are among the lowest-emission protein sources.",
+};
+
+
 
 function App() {
     // React state holding which ingredients are selected + their grams
     const [selections, setSelections] = useState<SelectionState>({});
+    const [selectedFoodId, setSelectedFoodId] = useState<number | null>(null);
+
 
     // Which page we’re on
     const [view, setView] = useState<View>("build");
@@ -345,117 +367,177 @@ function App() {
                 </div>
             ) : (
                 // 🌍 RESULTS VIEW (second page)
-                <div className="w-full max-w-3xl bg-[rgb(77,59,63)] rounded-3xl border border-[rgb(232,175,149)] p-6 md:p-8 flex flex-col gap-4">
-                    <h1 className="font-playfair text-4xl mb-2">
-                        Your Climate Plate Summary
-                    </h1>
-
-                    {summary ? (
-                        <>
-                            <p className="text-sm text-slate-200 mb-2">
-                                You built a plate with{" "}
-                                <span className="font-semibold">
-        {summary.items.length} ingredient
-                                    {summary.items.length > 1 ? "s" : ""}
-      </span>{" "}
-                                totaling{" "}
-                                <span className="font-semibold">
-        {summary.totalGrams} grams
+                // 🌍 RESULTS VIEW (second page)
+                <div className="w-full max-w-6xl bg-[rgb(41,31,33)] text-slate-100 flex flex-col gap-6">
+                    {/* TOP: big headline */}
+                    <div className="text-center">
+                        <h1 className="font-playfair text-4xl md:text-5xl lg:text-6xl mb-3">
+                            Your plate&apos;s impact is{" "}
+                            <span className="text-[rgb(232,175,149)]">
+        {backendSummary
+            ? backendSummary.impact_score_1_to_10.toFixed(1)
+            : "–"}
+                                /10
       </span>
-                                .
-                            </p>
+                        </h1>
 
-                            <div className="bg-[#4D3B3F] rounded-2xl p-4 space-y-2">
-                                {summary.items.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="flex items-center justify-between text-sm"
+                        {backendSummary && (
+                            <p className="text-sm md:text-base text-slate-200 max-w-2xl mx-auto">
+                                This score combines climate-warming gases, freshwater use, and land use
+                                for your whole plate.
+                            </p>
+                        )}
+                    </div>
+
+                    {/* MIDDLE: three big stat bubbles */}
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
+                        <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center">
+      <span className="text-xs uppercase tracking-wide text-slate-300 mb-1">
+        CO₂ cost
+      </span>
+                            <span className="text-2xl font-semibold">
+        {backendSummary ? backendSummary.total_co2_kg.toFixed(2) : "–"} kg
+      </span>
+                        </div>
+                        <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center">
+      <span className="text-xs uppercase tracking-wide text-slate-300 mb-1">
+        Water usage
+      </span>
+                            <span className="text-2xl font-semibold">
+        {backendSummary ? backendSummary.total_freshwater_l.toFixed(1) : "–"} L
+      </span>
+                        </div>
+                        <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center">
+      <span className="text-xs uppercase tracking-wide text-slate-300 mb-1">
+        Land usage
+      </span>
+                            <span className="text-2xl font-semibold">
+        {backendSummary ? backendSummary.total_land_m2.toFixed(2) : "–"} m²
+      </span>
+                        </div>
+                    </div>
+
+                    {/* LOWER SECTION: side foods + "This means" + fact box */}
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-6 items-start">
+                        {/* LEFT: clickable foods */}
+                        <div className="space-y-2">
+                            <h2 className="text-sm font-semibold mb-2 text-slate-200">
+                                Foods on your plate
+                            </h2>
+                            <div className="flex flex-col gap-2">
+                                {backendSummary?.items.map((item) => (
+                                    <button
+                                        key={item.ingredient_id}
+                                        className={`w-full text-left px-3 py-2 rounded-xl border text-sm transition ${
+                                            selectedFoodId === item.ingredient_id
+                                                ? "bg-[rgb(232,175,149)] text-[rgb(77,59,63)] border-[rgb(232,175,149)]"
+                                                : "bg-[rgb(77,59,63)] border-[rgb(232,175,149)] text-slate-100 hover:bg-[rgb(94,73,78)]"
+                                        }`}
+                                        onClick={() => setSelectedFoodId(item.ingredient_id)}
                                     >
-                                        <span>{item.name}</span>
-                                        <span className="text-slate-200">{item.grams} g</span>
-                                    </div>
+                                        {item.name}
+                                    </button>
                                 ))}
                             </div>
+                        </div>
 
-                            {/* Backend data, if we got it */}
-                            {isLoading && (
-                                <p className="text-sm text-slate-300 mt-4">
-                                    Calculating climate impact...
-                                </p>
-                            )}
-
-                            {error && (
-                                <p className="text-sm text-red-300 mt-4">
-                                    Error fetching impact data: {error}
-                                </p>
-                            )}
-
-                            {backendSummary && !isLoading && !error && (
-                                <div className="mt-6 space-y-3">
-                                    <h2 className="font-playfair text-2xl">
-                                        Climate Impact (from backend)
-                                    </h2>
-                                    <div className="bg-[#4D3B3F] rounded-2xl p-4 space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <span>Total CO₂ emissions</span>
-                                            <span className="font-semibold">
-              {backendSummary.total_co2_kg.toFixed(2)} kg
-            </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Total freshwater use</span>
-                                            <span className="font-semibold">
-              {backendSummary.total_freshwater_l.toFixed(1)} L
-            </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Total land use</span>
-                                            <span className="font-semibold">
-              {backendSummary.total_land_m2.toFixed(2)} m²
-            </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Impact score</span>
-                                            <span className="font-semibold">
-              {backendSummary.impact_score_1_to_10.toFixed(1)} / 10
-            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Optional: per-ingredient backend breakdown */}
-                                    <div className="bg-[#4D3B3F] rounded-2xl p-4 space-y-2 text-sm">
-                                        <h3 className="font-semibold mb-2">Per-ingredient impact</h3>
-                                        {backendSummary.items.map((item) => (
-                                            <div
-                                                key={item.ingredient_id}
-                                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1"
-                                            >
-                                                <span>{item.name}</span>
-                                                <span className="text-slate-200">
-                {item.quantity_g} g · {item.co2_kg.toFixed(2)} kg CO₂ ·{" "}
-                                                    {item.freshwater_l.toFixed(1)} L water ·{" "}
-                                                    {item.land_m2.toFixed(2)} m² land
+                        {/* CENTER: "This means" + bullets */}
+                        <div className="bg-[rgb(77,59,63)] rounded-3xl border border-[rgb(232,175,149)] px-5 py-6 space-y-3">
+                            <h2 className="font-playfair text-2xl mb-2">This means:</h2>
+                            <ul className="space-y-2 text-sm md:text-base">
+                                {backendSummary ? (
+                                    <>
+                                        <li className="flex gap-2">
+                                            <span>★</span>
+                                            <span>
+                This plate emits roughly{" "}
+                                                <span className="font-semibold">
+                  {backendSummary.total_co2_kg.toFixed(2)} kg of CO₂
+                </span>
+                , adding to the gases that warm the planet.
               </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                                        </li>
+                                        <li className="flex gap-2">
+                                            <span>★</span>
+                                            <span>
+                It uses about{" "}
+                                                <span className="font-semibold">
+                  {backendSummary.total_freshwater_l.toFixed(1)} liters
+                </span>{" "}
+                                                of freshwater — from farm to plate.
+              </span>
+                                        </li>
+                                        <li className="flex gap-2">
+                                            <span>★</span>
+                                            <span>
+                It occupies around{" "}
+                                                <span className="font-semibold">
+                  {backendSummary.total_land_m2.toFixed(2)} m²
+                </span>{" "}
+                                                of land, affecting habitats and ecosystems.
+              </span>
+                                        </li>
+                                        <li className="flex gap-2">
+                                            <span>★</span>
+                                            <span>
+                Small shifts — like swapping one high-impact item for a lower one
+                — can significantly improve this score.
+              </span>
+                                        </li>
+                                    </>
+                                ) : (
+                                    <li className="flex gap-2">
+                                        <span>★</span>
+                                        <span>
+              Once the backend responds with impact data, you&apos;ll see an
+              interpretation of your plate here.
+            </span>
+                                    </li>
+                                )}
+                            </ul>
+                        </div>
 
-                            {!backendSummary && !isLoading && !error && (
-                                <p className="text-sm text-slate-300 mt-4">
-                                    Emissions, water use, and land impact will appear here once the backend
-                                    is fully wired. For now you can still tweak your plate and explore
-                                    different combinations.
-                                </p>
-                            )}
-                        </>
-                    ) : (
-                        <p>No summary available. Try building a plate first.</p>
-                    )}
+                        {/* RIGHT: selected food fact */}
+                        <div className="space-y-2">
+                            <h2 className="text-sm font-semibold mb-2 text-slate-200">
+                                Ingredient spotlight
+                            </h2>
+                            <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-4 text-sm">
+                                {backendSummary && backendSummary.items.length > 0 ? (
+                                    (() => {
+                                        const selected =
+                                            backendSummary.items.find(
+                                                (item) => item.ingredient_id === selectedFoodId
+                                            ) ?? backendSummary.items[0];
 
+                                        const fact =
+                                            FOOD_FACTS[selected.name] ??
+                                            "This ingredient contributes to your plate’s overall climate, water, and land footprint based on how it’s grown, processed, and transported.";
 
-                    <div className="mt-6 flex gap-3">
+                                        return (
+                                            <>
+                                                <p className="font-semibold mb-1">{selected.name}</p>
+                                                <p className="text-slate-200 mb-2">
+                                                    {selected.quantity_g} g on your plate ·{" "}
+                                                    {selected.co2_kg.toFixed(2)} kg CO₂ ·{" "}
+                                                    {selected.freshwater_l.toFixed(1)} L water ·{" "}
+                                                    {selected.land_m2.toFixed(2)} m² land
+                                                </p>
+                                                <p className="text-slate-200">{fact}</p>
+                                            </>
+                                        );
+                                    })()
+                                ) : (
+                                    <p className="text-slate-300">
+                                        Click a food on the left to see a quick fact about its impact.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ACTIONS */}
+                    <div className="mt-6 flex flex-wrap gap-3 justify-center">
                         <button
                             className="px-4 py-2 rounded-xl bg-[rgb(181,171,161)] text-[rgb(94,73,78)] font-semibold hover:bg-[rgb(232,175,149)] transition"
                             onClick={handleEditPlate}
@@ -470,6 +552,7 @@ function App() {
                         </button>
                     </div>
                 </div>
+
             )}
         </div>
     );
