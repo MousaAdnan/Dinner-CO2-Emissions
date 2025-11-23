@@ -103,15 +103,15 @@ function App() {
     // Which food is selected in the results "spotlight"
     const [selectedFoodId, setSelectedFoodId] = useState<number | null>(null);
 
-    // Which slide of the carousel we're on: 0 = impact boxes, 1 = this means, 2 = Gemini
+    // Which slide of the carousel we're on: 0 = impact boxes, 1 = this means
     const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
     const handlePrevSlide = () => {
-        setActiveSlideIndex((prev) => (prev + 2) % 3);
+        setActiveSlideIndex((prev) => (prev === 0 ? 1 : 0));
     };
 
     const handleNextSlide = () => {
-        setActiveSlideIndex((prev) => (prev + 1) % 3);
+        setActiveSlideIndex((prev) => (prev === 1 ? 0 : 1));
     };
 
     // Called when a checkbox is toggled (true/false)
@@ -390,7 +390,7 @@ function App() {
                         )}
                     </div>
 
-                    {/* --- 3-PAGE CAROUSEL, FIXED HEIGHT, ARROWS UNDER --- */}
+                    {/* --- 2-PAGE CAROUSEL, FIXED HEIGHT, ARROWS UNDER --- */}
                     <div className="mt-4 max-w-5xl mx-auto flex flex-col items-stretch gap-3">
                         {backendSummary ? (
                             <>
@@ -445,79 +445,47 @@ function App() {
                                             }
 
                                             // Slide 1: "This Means"
-                                            if (activeSlideIndex === 1) {
-                                                return (
-                                                    <div className="bg-[rgb(77,59,63)] rounded-3xl border border-[rgb(232,175,149)] px-5 py-6 space-y-3 w-full h-full flex flex-col justify-center">
-                                                        <h2 className="font-playfair text-2xl mb-2">
-                                                            This means:
-                                                        </h2>
-                                                        <ul className="space-y-2 text-sm md:text-base">
-                                                            <li className="flex gap-2">
-                                                                <span>★</span>
-                                                                <span>
-                                  This plate emits{" "}
-                                                                    <span className="font-semibold">
-                                    {backendSummary.total_co2_kg.toFixed(2)} kg
-                                    CO₂
-                                  </span>
-                                  .
-                                </span>
-                                                            </li>
-
-                                                            <li className="flex gap-2">
-                                                                <span>★</span>
-                                                                <span>
-                                  It uses{" "}
-                                                                    <span className="font-semibold">
-                                    {backendSummary.total_freshwater_l.toFixed(
-                                        1
-                                    )}{" "}
-                                                                        L
-                                  </span>{" "}
-                                                                    of freshwater.
-                                </span>
-                                                            </li>
-
-                                                            <li className="flex gap-2">
-                                                                <span>★</span>
-                                                                <span>
-                                  It requires{" "}
-                                                                    <span className="font-semibold">
-                                    {backendSummary.total_land_m2.toFixed(2)}{" "}
-                                                                        m²
-                                  </span>{" "}
-                                                                    of land.
-                                </span>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                );
-                                            }
-
-                                            // Slide 2: Gemini Insights
                                             return (
                                                 <div className="bg-[rgb(124,109,108)] rounded-3xl border border-[rgb(232,175,149)] px-5 py-6 space-y-3 w-full h-full flex flex-col justify-center">
                                                     <h2 className="font-playfair text-2xl mb-2">
-                                                        Gemini Insights
+                                                        This means:
                                                     </h2>
-                                                    <p className="text-sm md:text-base text-slate-100">
-                                                        Soon, this box will use Gemini to suggest
-                                                        lower-impact alternatives based on your exact plate.
-                                                    </p>
-                                                    <ul className="list-disc list-inside text-sm md:text-base text-slate-100 space-y-1">
-                                                        <li>
-                                                            Swap a high-impact ingredient for a lower one.
+                                                    <ul className="space-y-2 text-sm md:text-base">
+                                                        <li className="flex gap-2">
+                                                            <span>★</span>
+                                                            <span>
+                                This plate emits{" "}
+                                                                <span className="font-semibold">
+                                  {backendSummary.total_co2_kg.toFixed(2)} kg
+                                  CO₂
+                                </span>
+                                .
+                              </span>
                                                         </li>
-                                                        <li>
-                                                            Show how portion adjustments change your score.
+
+                                                        <li className="flex gap-2">
+                                                            <span>★</span>
+                                                            <span>
+                                It uses{" "}
+                                                                <span className="font-semibold">
+                                  {backendSummary.total_freshwater_l.toFixed(1)}{" "}
+                                                                    L
+                                </span>{" "}
+                                                                of freshwater.
+                              </span>
                                                         </li>
-                                                        <li>
-                                                            Compare your plate to a more sustainable version.
+
+                                                        <li className="flex gap-2">
+                                                            <span>★</span>
+                                                            <span>
+                                It requires{" "}
+                                                                <span className="font-semibold">
+                                  {backendSummary.total_land_m2.toFixed(2)} m²
+                                </span>{" "}
+                                                                of land.
+                              </span>
                                                         </li>
                                                     </ul>
-                                                    <p className="text-xs text-slate-200 mt-2">
-                                                        (This will come from the Gemini API.)
-                                                    </p>
                                                 </div>
                                             );
                                         })()}
@@ -535,7 +503,7 @@ function App() {
                                     </button>
 
                                     <div className="flex gap-2">
-                                        {[0, 1, 2].map((idx) => (
+                                        {[0, 1].map((idx) => (
                                             <button
                                                 key={idx}
                                                 type="button"
