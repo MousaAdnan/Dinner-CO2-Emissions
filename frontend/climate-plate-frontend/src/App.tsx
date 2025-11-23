@@ -1,10 +1,8 @@
 // src/App.tsx
-// src/App.tsx
 import { useState } from "react";
 import { INGREDIENTS } from "./data/ingredients";
 
 const BASE_URL = "https://climate-plate-backend-6cykvp3hlq-uc.a.run.app";
-
 
 // This describes the shape of the "selections" state.
 type SelectionState = {
@@ -17,7 +15,7 @@ type SelectionState = {
 // Which screen are we on?
 type View = "build" | "results";
 
-// Local summary type for the results page (no backend needed yet)
+// Local summary type for the results page (for UI text)
 type ResultItem = {
     id: string;
     name: string;
@@ -47,6 +45,22 @@ type BackendPlateSummary = {
     items: BackendPlateItem[];
 };
 
+const FOOD_FACTS: Record<string, string> = {
+    Beef: "Beef typically has one of the highest CO₂ footprints per gram of protein.",
+    Chicken:
+        "Chicken usually has less climate impact than beef but more than most plants.",
+    Fish:
+        "Fish can be lower in emissions than red meat, but it depends a lot on how it’s caught or farmed.",
+    Rice:
+        "Rice paddies emit methane, a powerful greenhouse gas, especially in flooded fields.",
+    Potato:
+        "Potatoes are a relatively low-emission source of carbohydrates compared to many grains.",
+    Bread:
+        "Bread’s impact mostly comes from growing and processing wheat, plus baking energy.",
+    Eggs:
+        "Eggs have a moderate climate impact, lower than beef and cheese per gram of protein.",
+    Peas: "Peas and other legumes are among the lowest-emission protein sources.",
+};
 
 function App() {
     // React state holding which ingredients are selected + their grams
@@ -58,10 +72,14 @@ function App() {
     // Local summary for the results page
     const [summary, setSummary] = useState<LocalResultSummary | null>(null);
 
+    // Backend state
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [backendSummary, setBackendSummary] = useState<BackendPlateSummary | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Which food is selected in the results "spotlight"
+    const [selectedFoodId, setSelectedFoodId] = useState<number | null>(null);
 
     // Called when a checkbox is toggled (true/false)
     const handleToggleSelect = (id: string, checked: boolean) => {
@@ -94,11 +112,10 @@ function App() {
     };
 
     // Called when the "Done – calculate impact" button is clicked
-    // For now: make a local summary + switch to results page
-    // Called when the "Done – calculate impact" button is clicked
     const handleDoneClick = async () => {
         setError(null);
         setIsLoading(true);
+        setBackendSummary(null);
 
         // 1) Build list of selected items with names (for local summary)
         const items: ResultItem[] = Object.entries(selections)
@@ -122,25 +139,21 @@ function App() {
         }
 
         const totalGrams = items.reduce((sum, item) => sum + item.grams, 0);
-        setSummary({ totalGrams, items }); // keep local summary for UI
+        setSummary({ totalGrams, items }); // local summary for UI text
 
         try {
-            // 2) Ensure we have a session from the backend
-            let currentSessionId = sessionId;
+            // 2) ALWAYS start a fresh session for each calculation
+            const res = await fetch(`${BASE_URL}/session/start`, {
+                method: "POST",
+            });
 
-            if (!currentSessionId) {
-                const res = await fetch(`${BASE_URL}/session/start`, {
-                    method: "POST",
-                });
-
-                if (!res.ok) {
-                    throw new Error(`Failed to start session: ${res.status}`);
-                }
-
-                const data = await res.json();
-                currentSessionId = data.session_id;
-                setSessionId(currentSessionId);
+            if (!res.ok) {
+                throw new Error(`Failed to start session: ${res.status}`);
             }
+
+            const data = await res.json();
+            const currentSessionId = data.session_id as string;
+            setSessionId(currentSessionId);
 
             // 3) Send each ingredient to /plate/add
             const selectedForBackend = items
@@ -160,7 +173,7 @@ function App() {
                 selectedForBackend.map((item) =>
                     fetch(
                         `${BASE_URL}/plate/add?session_id=${encodeURIComponent(
-                            currentSessionId!
+                            currentSessionId
                         )}&ingredient_id=${item.backendId}&quantity_g=${item.grams}`,
                         { method: "POST" }
                     )
@@ -170,7 +183,7 @@ function App() {
             // 4) Fetch the summary for this session
             const summaryRes = await fetch(
                 `${BASE_URL}/impact/summary?session_id=${encodeURIComponent(
-                    currentSessionId!
+                    currentSessionId
                 )}`
             );
 
@@ -180,6 +193,11 @@ function App() {
 
             const backendData: BackendPlateSummary = await summaryRes.json();
             setBackendSummary(backendData);
+
+            // Default selected food in spotlight = first item
+            if (backendData.items.length > 0) {
+                setSelectedFoodId(backendData.items[0].ingredient_id);
+            }
         } catch (err: any) {
             console.error("Error talking to backend:", err);
             setError(err?.message ?? "Unknown error talking to backend.");
@@ -190,15 +208,20 @@ function App() {
         }
     };
 
-
-    // Simple helper to reset and go back to builder
+    // Simple helper to go back to builder while keeping current selections
     const handleEditPlate = () => {
         setView("build");
     };
 
+    // Full reset
     const handleStartOver = () => {
         setSelections({});
         setSummary(null);
+        setBackendSummary(null);
+        setSessionId(null);
+        setSelectedFoodId(null);
+        setError(null);
+        setIsLoading(false);
         setView("build");
     };
 
@@ -206,7 +229,7 @@ function App() {
         // Full-screen container: dark background, center content
         <div className="min-h-screen bg-[rgb(41,31,33)] text-slate-100 flex items-center justify-center px-4">
             {view === "build" ? (
-                // 🥗 BUILD VIEW (your original layout)
+                // 🥗 BUILD VIEW
                 <div className="w-full max-w-5xl flex gap-10 items-center">
                     {/* LEFT: plate area (NO inner box, just floating on background) */}
                     <div className="flex-[3] flex items-center justify-center">
@@ -216,7 +239,7 @@ function App() {
                                 position: "relative", // so children with position:absolute are relative to this box
                                 width: "100%",
                                 maxWidth: "520px", // tweak this to make the plate bigger/smaller overall
-                                aspectRatio: "1 / 1", // square; remove if you want it to be taller/wider
+                                aspectRatio: "1 / 1", // square
                                 margin: "0 auto", // center inside its flex column
                             }}
                         >
@@ -241,8 +264,7 @@ function App() {
                                 // If this ingredient is NOT selected or grams <= 0, don't render it
                                 if (!current?.isSelected || current.grams <= 0) return null;
 
-                                // Compute visual scale based on grams.
-                                // Here we clamp between 50g and 200g so the size doesn't explode.
+                                // Compute visual scale based on grams (50–200g => slightly smaller/bigger)
                                 const minGrams = 50;
                                 const maxGrams = 200;
                                 const clamped = Math.max(
@@ -250,7 +272,7 @@ function App() {
                                     Math.min(maxGrams, current.grams)
                                 );
                                 const t = (clamped - minGrams) / (maxGrams - minGrams); // normalized 0–1
-                                const scale = 0.9 + t * 0.35; // final range: 0.9–1.25-ish
+                                const scale = 0.9 + t * 0.35; // final range ~0.9–1.25
 
                                 return (
                                     <img
@@ -284,6 +306,7 @@ function App() {
                         </h1>
 
                         <p className="text-sm text-slate-300 mb-4">
+                            Choose your ingredients and adjust the sliders to match your meal.
                         </p>
 
                         {/* Scrollable list section in case you add many ingredients later */}
@@ -339,123 +362,198 @@ function App() {
                             className="mt-4 w-full py-2 rounded-xl bg-[rgb(181,171,161)] text-[rgb(94,73,78)] font-semibold hover:bg-[rgb(232,175,149)] transition"
                             onClick={handleDoneClick}
                         >
-                            Done – calculate impact
+                            {isLoading ? "Calculating..." : "Done – calculate impact"}
                         </button>
+
+                        {error && (
+                            <p className="mt-2 text-xs text-red-300">
+                                There was a problem talking to the server: {error}
+                            </p>
+                        )}
                     </div>
                 </div>
             ) : (
                 // 🌍 RESULTS VIEW (second page)
-                <div className="w-full max-w-3xl bg-[rgb(77,59,63)] rounded-3xl border border-[rgb(232,175,149)] p-6 md:p-8 flex flex-col gap-4">
-                    <h1 className="font-playfair text-4xl mb-2">
-                        Your Climate Plate Summary
-                    </h1>
+                <div className="w-full max-w-6xl bg-[rgb(41,31,33)] text-slate-100 flex flex-col gap-6">
+                    {/* TOP: big headline */}
+                    <div className="text-center">
+                        <h1 className="font-playfair text-4xl md:text-5xl lg:text-6xl mb-3">
+                            Your plate&apos;s impact is{" "}
+                            <span className="text-[rgb(232,175,149)]">
+                {backendSummary
+                    ? backendSummary.impact_score_1_to_10.toFixed(1)
+                    : "–"}
+                                /10
+              </span>
+                        </h1>
 
-                    {summary ? (
-                        <>
-                            <p className="text-sm text-slate-200 mb-2">
-                                You built a plate with{" "}
-                                <span className="font-semibold">
-        {summary.items.length} ingredient
-                                    {summary.items.length > 1 ? "s" : ""}
-      </span>{" "}
-                                totaling{" "}
-                                <span className="font-semibold">
-        {summary.totalGrams} grams
-      </span>
-                                .
+                        {summary && (
+                            <p className="text-sm md:text-base text-slate-200 max-w-2xl mx-auto">
+                                Your meal uses {summary.totalGrams} g of food across{" "}
+                                {summary.items.length} ingredient
+                                {summary.items.length > 1 ? "s" : ""}. Here&apos;s what that
+                                means for the planet.
                             </p>
+                        )}
+                    </div>
 
-                            <div className="bg-[#4D3B3F] rounded-2xl p-4 space-y-2">
-                                {summary.items.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="flex items-center justify-between text-sm"
+                    {/* MIDDLE: three big stat bubbles */}
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
+                        <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center">
+              <span className="text-xs uppercase tracking-wide text-slate-300 mb-1">
+                CO₂ cost
+              </span>
+                            <span className="text-2xl font-semibold">
+                {backendSummary ? backendSummary.total_co2_kg.toFixed(2) : "–"}{" "}
+                                kg
+              </span>
+                        </div>
+                        <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center">
+              <span className="text-xs uppercase tracking-wide text-slate-300 mb-1">
+                Water usage
+              </span>
+                            <span className="text-2xl font-semibold">
+                {backendSummary
+                    ? backendSummary.total_freshwater_l.toFixed(1)
+                    : "–"}{" "}
+                                L
+              </span>
+                        </div>
+                        <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-5 flex flex-col items-center">
+              <span className="text-xs uppercase tracking-wide text-slate-300 mb-1">
+                Land usage
+              </span>
+                            <span className="text-2xl font-semibold">
+                {backendSummary
+                    ? backendSummary.total_land_m2.toFixed(2)
+                    : "–"}{" "}
+                                m²
+              </span>
+                        </div>
+                    </div>
+
+                    {/* LOWER SECTION: side foods + "This means" + fact box */}
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-6 items-start">
+                        {/* LEFT: clickable foods */}
+                        <div className="space-y-2">
+                            <h2 className="text-sm font-semibold mb-2 text-slate-200">
+                                Foods on your plate
+                            </h2>
+                            <div className="flex flex-col gap-2">
+                                {backendSummary?.items.map((item) => (
+                                    <button
+                                        key={item.ingredient_id}
+                                        className={`w-full text-left px-3 py-2 rounded-xl border text-sm transition ${
+                                            selectedFoodId === item.ingredient_id
+                                                ? "bg-[rgb(232,175,149)] text-[rgb(77,59,63)] border-[rgb(232,175,149)]"
+                                                : "bg-[rgb(77,59,63)] border-[rgb(232,175,149)] text-slate-100 hover:bg-[rgb(94,73,78)]"
+                                        }`}
+                                        onClick={() => setSelectedFoodId(item.ingredient_id)}
                                     >
-                                        <span>{item.name}</span>
-                                        <span className="text-slate-200">{item.grams} g</span>
-                                    </div>
+                                        {item.name}
+                                    </button>
                                 ))}
                             </div>
+                        </div>
 
-                            {/* Backend data, if we got it */}
-                            {isLoading && (
-                                <p className="text-sm text-slate-300 mt-4">
-                                    Calculating climate impact...
+                        {/* CENTER: "This means" + bullets */}
+                        <div className="bg-[rgb(77,59,63)] rounded-3xl border border-[rgb(232,175,149)] px-5 py-6 space-y-3">
+                            <h2 className="font-playfair text-2xl mb-2">This means:</h2>
+                            {backendSummary ? (
+                                <ul className="space-y-2 text-sm md:text-base">
+                                    <li className="flex gap-2">
+                                        <span>★</span>
+                                        <span>
+                      This plate emits roughly{" "}
+                                            <span className="font-semibold">
+                        {backendSummary.total_co2_kg.toFixed(2)} kg of CO₂
+                      </span>
+                      , adding to the gases that warm the planet.
+                    </span>
+                                    </li>
+                                    <li className="flex gap-2">
+                                        <span>★</span>
+                                        <span>
+                      It uses about{" "}
+                                            <span className="font-semibold">
+                        {backendSummary.total_freshwater_l.toFixed(1)} liters
+                      </span>{" "}
+                                            of freshwater — from farm to plate.
+                    </span>
+                                    </li>
+                                    <li className="flex gap-2">
+                                        <span>★</span>
+                                        <span>
+                      It occupies around{" "}
+                                            <span className="font-semibold">
+                        {backendSummary.total_land_m2.toFixed(2)} m²
+                      </span>{" "}
+                                            of land, affecting habitats and ecosystems.
+                    </span>
+                                    </li>
+                                    <li className="flex gap-2">
+                                        <span>★</span>
+                                        <span>
+                      Small shifts — like swapping one high-impact item for a
+                      lower one — can significantly improve this score.
+                    </span>
+                                    </li>
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-slate-300">
+                                    We don&apos;t have impact data for this plate yet.
                                 </p>
                             )}
 
                             {error && (
-                                <p className="text-sm text-red-300 mt-4">
-                                    Error fetching impact data: {error}
+                                <p className="text-xs text-red-300 mt-2">
+                                    There was a problem talking to the server: {error}
                                 </p>
                             )}
+                        </div>
 
-                            {backendSummary && !isLoading && !error && (
-                                <div className="mt-6 space-y-3">
-                                    <h2 className="font-playfair text-2xl">
-                                        Climate Impact (from backend)
-                                    </h2>
-                                    <div className="bg-[#4D3B3F] rounded-2xl p-4 space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <span>Total CO₂ emissions</span>
-                                            <span className="font-semibold">
-              {backendSummary.total_co2_kg.toFixed(2)} kg
-            </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Total freshwater use</span>
-                                            <span className="font-semibold">
-              {backendSummary.total_freshwater_l.toFixed(1)} L
-            </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Total land use</span>
-                                            <span className="font-semibold">
-              {backendSummary.total_land_m2.toFixed(2)} m²
-            </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Impact score</span>
-                                            <span className="font-semibold">
-              {backendSummary.impact_score_1_to_10.toFixed(1)} / 10
-            </span>
-                                        </div>
-                                    </div>
+                        {/* RIGHT: selected food fact */}
+                        <div className="space-y-2">
+                            <h2 className="text-sm font-semibold mb-2 text-slate-200">
+                                Ingredient spotlight
+                            </h2>
+                            <div className="bg-[rgb(77,59,63)] rounded-2xl border border-[rgb(232,175,149)] px-4 py-4 text-sm">
+                                {backendSummary && backendSummary.items.length > 0 ? (
+                                    (() => {
+                                        const selected =
+                                            backendSummary.items.find(
+                                                (item) => item.ingredient_id === selectedFoodId
+                                            ) ?? backendSummary.items[0];
 
-                                    {/* Optional: per-ingredient backend breakdown */}
-                                    <div className="bg-[#4D3B3F] rounded-2xl p-4 space-y-2 text-sm">
-                                        <h3 className="font-semibold mb-2">Per-ingredient impact</h3>
-                                        {backendSummary.items.map((item) => (
-                                            <div
-                                                key={item.ingredient_id}
-                                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1"
-                                            >
-                                                <span>{item.name}</span>
-                                                <span className="text-slate-200">
-                {item.quantity_g} g · {item.co2_kg.toFixed(2)} kg CO₂ ·{" "}
-                                                    {item.freshwater_l.toFixed(1)} L water ·{" "}
-                                                    {item.land_m2.toFixed(2)} m² land
-              </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                                        const fact =
+                                            FOOD_FACTS[selected.name] ??
+                                            "This ingredient contributes to your plate’s overall climate, water, and land footprint based on how it’s grown, processed, and transported.";
 
-                            {!backendSummary && !isLoading && !error && (
-                                <p className="text-sm text-slate-300 mt-4">
-                                    Emissions, water use, and land impact will appear here once the backend
-                                    is fully wired. For now you can still tweak your plate and explore
-                                    different combinations.
-                                </p>
-                            )}
-                        </>
-                    ) : (
-                        <p>No summary available. Try building a plate first.</p>
-                    )}
+                                        return (
+                                            <>
+                                                <p className="font-semibold mb-1">{selected.name}</p>
+                                                <p className="text-slate-200 mb-2">
+                                                    {selected.quantity_g} g on your plate ·{" "}
+                                                    {selected.co2_kg.toFixed(2)} kg CO₂ ·{" "}
+                                                    {selected.freshwater_l.toFixed(1)} L water ·{" "}
+                                                    {selected.land_m2.toFixed(2)} m² land
+                                                </p>
+                                                <p className="text-slate-200">{fact}</p>
+                                            </>
+                                        );
+                                    })()
+                                ) : (
+                                    <p className="text-slate-300">
+                                        Click a food on the left to see a quick fact about its
+                                        impact.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
-
-                    <div className="mt-6 flex gap-3">
+                    {/* ACTIONS */}
+                    <div className="mt-6 flex flex-wrap gap-3 justify-center">
                         <button
                             className="px-4 py-2 rounded-xl bg-[rgb(181,171,161)] text-[rgb(94,73,78)] font-semibold hover:bg-[rgb(232,175,149)] transition"
                             onClick={handleEditPlate}
