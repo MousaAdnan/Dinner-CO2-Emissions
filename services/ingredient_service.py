@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 from typing import List, Optional
 
-from models.ingredient import Ingredient
+from models.ingredients import Ingredient
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 INGREDIENTS_FILE = DATA_DIR / "ingredients.json"
