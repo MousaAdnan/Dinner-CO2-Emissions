@@ -4,30 +4,55 @@ from models.impact import ImpactSummary, IngredientImpact
 from services.plate_service import get_plate
 from services.ingredient_service import get_ingredient_by_id
 
-
 def _compute_impact_score(total_co2: float, total_water: float, total_land: float) -> float:
     """
-    Very simple scoring:
-    - We assume some rough "bad" upper bounds and clamp.
-    - 60% weight CO2, 30% water, 10% land.
-    - Lower impact => higher score (1–10).
+    Returns a score from 1 (best) to 10 (worst).
+    Higher CO₂ / water / land => higher score.
+
+    We normalize each metric between the best and worst possible plates:
+      - CO₂:   0.26 kg (best)  to 15.76 kg (worst)
+      - Water: 184.6 L (best)  to 1926.1 L (worst)
+      - Land:  0.42 m² (best)  to 71.18 m² (worst)
+
+    Then combine with weights:
+      60% CO₂, 30% water, 10% land.
     """
 
-    # Rough upper bounds for normalization (tuned for your scale, not physics-accurate)
-    co2_max = 20.0      # kg
-    water_max = 10000.0 # liters
-    land_max = 50.0     # m2
+    # Best (100% good) plate
+    min_co2 = 0.26       # kg
+    min_water = 184.6    # liters
+    min_land = 0.42      # m²
 
-    co2_norm = min(total_co2 / co2_max, 1.0)
-    water_norm = min(total_water / water_max, 1.0)
-    land_norm = min(total_land / land_max, 1.0)
+    # Worst (100% bad) plate
+    max_co2 = 15.76      # kg
+    max_water = 1926.1   # liters
+    max_land = 71.18     # m²
 
+    # Avoid division by zero (shouldn't happen with your values, but just in case)
+    co2_range = max_co2 - min_co2 or 1.0
+    water_range = max_water - min_water or 1.0
+    land_range = max_land - min_land or 1.0
+
+    # Normalize each metric to [0, 1] based on min/max
+    co2_norm = (total_co2 - min_co2) / co2_range
+    water_norm = (total_water - min_water) / water_range
+    land_norm = (total_land - min_land) / land_range
+
+    # Clamp to [0, 1]
+    co2_norm = min(max(co2_norm, 0.0), 1.0)
+    water_norm = min(max(water_norm, 0.0), 1.0)
+    land_norm = min(max(land_norm, 0.0), 1.0)
+
+    # Weighted combined impact: 0 = best, 1 = worst
     combined = 0.6 * co2_norm + 0.3 * water_norm + 0.1 * land_norm
 
-    # 0 impact => score 10, max impact => score 1
-    score = 10.0 - combined * 9.0
-    return round(max(1.0, min(10.0, score)), 1)
+    # Map combined to score:
+    #   combined = 0 -> score = 1 (best)
+    #   combined = 1 -> score = 10 (worst)
+    score = 1.0 + combined * 9.0
 
+    # Clamp and round
+    return round(min(10.0, max(1.0, score)), 1)
 
 def calculate_impact(session_id: str) -> ImpactSummary:
     plate = get_plate(session_id)
