@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "Beef",
+    "category": "meat",
+    "co2_kg_per_kg": 60.0,
+    "default_portion_g": 150
+  },
+  {
+    "id": 2,
+    "name": "Chicken",
+    "category": "meat",
+    "co2_kg_per_kg": 6.0,
+    "default_portion_g": 150
+  },
+  {
+    "id": 3,
+    "name": "Rice",
+    "category": "grain",
+    "co2_kg_per_kg": 4.0,
+    "default_portion_g": 180
+  },
+  {
+    "id": 4,
+    "name": "Potato",
+    "category": "vegetable",
+    "co2_kg_per_kg": 0.3,
+    "default_portion_g": 180
+  },
+  {
+    "id": 5,
+    "name": "Tomato",
+    "category": "vegetable",
+    "co2_kg_per_kg": 1.4,
+    "default_portion_g": 80
+  },
+  {
+    "id": 6,
+    "name": "Lentils",
+    "category": "legume",
+    "co2_kg_per_kg": 0.9,
+    "default_portion_g": 150
+  }
+]
