@@ -1,44 +1,178 @@
 [
   {
     "id": 1,
-    "name": "Beef",
-    "category": "meat",
-    "co2_kg_per_kg": 60.0,
-    "default_portion_g": 150
+    "slug": "wheat_and_rye_bread",
+    "name": "Wheat & Rye (Bread)",
+    "category": "plant",
+    "co2_kg_per_kg": 1.4,
+    "land_m2_per_kg": 7.94,
+    "freshwater_l_per_kg": 618.9,
+    "scarcity_water_l_per_kg": 22965.5,
+    "default_portion_g": 100
   },
   {
     "id": 2,
-    "name": "Chicken",
-    "category": "meat",
-    "co2_kg_per_kg": 6.0,
-    "default_portion_g": 150
+    "slug": "barley_beer",
+    "name": "Barley (Beer)",
+    "category": "drink",
+    "co2_kg_per_kg": 1.1,
+    "land_m2_per_kg": 7.94,
+    "freshwater_l_per_kg": 618.9,
+    "scarcity_water_l_per_kg": 22965.5,
+    "default_portion_g": 250
   },
   {
     "id": 3,
+    "slug": "rice",
     "name": "Rice",
-    "category": "grain",
+    "category": "plant",
     "co2_kg_per_kg": 4.0,
-    "default_portion_g": 180
+    "land_m2_per_kg": 2.8,
+    "freshwater_l_per_kg": 2248.4,
+    "scarcity_water_l_per_kg": 49576.3,
+    "default_portion_g": 100
   },
   {
     "id": 4,
-    "name": "Potato",
-    "category": "vegetable",
+    "slug": "potatoes",
+    "name": "Potatoes",
+    "category": "plant",
     "co2_kg_per_kg": 0.3,
-    "default_portion_g": 180
+    "land_m2_per_kg": 0.88,
+    "freshwater_l_per_kg": 59.1,
+    "scarcity_water_l_per_kg": 2754.2,
+    "default_portion_g": 100
   },
   {
     "id": 5,
-    "name": "Tomato",
-    "category": "vegetable",
-    "co2_kg_per_kg": 1.4,
-    "default_portion_g": 80
+    "slug": "peas",
+    "name": "Peas",
+    "category": "plant",
+    "co2_kg_per_kg": 0.8,
+    "land_m2_per_kg": 7.46,
+    "freshwater_l_per_kg": 396.6,
+    "scarcity_water_l_per_kg": 27948.2,
+    "default_portion_g": 100
   },
   {
     "id": 6,
-    "name": "Lentils",
-    "category": "legume",
-    "co2_kg_per_kg": 0.9,
+    "slug": "bananas",
+    "name": "Bananas",
+    "category": "fruit",
+    "co2_kg_per_kg": 0.8,
+    "land_m2_per_kg": 1.93,
+    "freshwater_l_per_kg": 114.5,
+    "scarcity_water_l_per_kg": 661.9,
+    "default_portion_g": 100
+  },
+  {
+    "id": 7,
+    "slug": "apples",
+    "name": "Apples",
+    "category": "fruit",
+    "co2_kg_per_kg": 0.3,
+    "land_m2_per_kg": 0.63,
+    "freshwater_l_per_kg": 180.1,
+    "scarcity_water_l_per_kg": 12948.6,
+    "default_portion_g": 100
+  },
+  {
+    "id": 8,
+    "slug": "wine",
+    "name": "Wine",
+    "category": "drink",
+    "co2_kg_per_kg": 1.4,
+    "land_m2_per_kg": 1.78,
+    "freshwater_l_per_kg": 78.9,
+    "scarcity_water_l_per_kg": 1149.3,
+    "default_portion_g": 250
+  },
+  {
+    "id": 9,
+    "slug": "coffee",
+    "name": "Coffee",
+    "category": "drink",
+    "co2_kg_per_kg": 16.5,
+    "land_m2_per_kg": 21.62,
+    "freshwater_l_per_kg": 25.9,
+    "scarcity_water_l_per_kg": 337.0,
+    "default_portion_g": 250
+  },
+  {
+    "id": 10,
+    "slug": "beef_beef_herd",
+    "name": "Beef (beef herd)",
+    "category": "meat",
+    "co2_kg_per_kg": 59.6,
+    "land_m2_per_kg": 326.21,
+    "freshwater_l_per_kg": 1451.2,
+    "scarcity_water_l_per_kg": 34732.5,
+    "default_portion_g": 150
+  },
+  {
+    "id": 11,
+    "slug": "lamb_and_mutton",
+    "name": "Lamb & Mutton",
+    "category": "meat",
+    "co2_kg_per_kg": 24.5,
+    "land_m2_per_kg": 369.81,
+    "freshwater_l_per_kg": 1802.8,
+    "scarcity_water_l_per_kg": 141925.0,
+    "default_portion_g": 150
+  },
+  {
+    "id": 12,
+    "slug": "pig_meat",
+    "name": "Pig Meat",
+    "category": "meat",
+    "co2_kg_per_kg": 7.2,
+    "land_m2_per_kg": 17.36,
+    "freshwater_l_per_kg": 1795.8,
+    "scarcity_water_l_per_kg": 66867.4,
+    "default_portion_g": 150
+  },
+  {
+    "id": 13,
+    "slug": "poultry_meat",
+    "name": "Poultry Meat",
+    "category": "meat",
+    "co2_kg_per_kg": 6.1,
+    "land_m2_per_kg": 12.22,
+    "freshwater_l_per_kg": 660.0,
+    "scarcity_water_l_per_kg": 14177.9,
+    "default_portion_g": 150
+  },
+  {
+    "id": 14,
+    "slug": "cheese",
+    "name": "Cheese",
+    "category": "plant",
+    "co2_kg_per_kg": 21.2,
+    "land_m2_per_kg": 87.79,
+    "freshwater_l_per_kg": 5605.2,
+    "scarcity_water_l_per_kg": 180850.6,
+    "default_portion_g": 100
+  },
+  {
+    "id": 15,
+    "slug": "eggs",
+    "name": "Eggs",
+    "category": "plant",
+    "co2_kg_per_kg": 4.5,
+    "land_m2_per_kg": 6.27,
+    "freshwater_l_per_kg": 577.7,
+    "scarcity_water_l_per_kg": 17982.7,
+    "default_portion_g": 100
+  },
+  {
+    "id": 16,
+    "slug": "fish_farmed",
+    "name": "Fish (farmed)",
+    "category": "meat",
+    "co2_kg_per_kg": 5.1,
+    "land_m2_per_kg": 8.41,
+    "freshwater_l_per_kg": 3691.3,
+    "scarcity_water_l_per_kg": 41572.2,
     "default_portion_g": 150
   }
 ]
