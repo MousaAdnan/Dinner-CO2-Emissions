@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()   # <-- this loads your .env file
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,7 +10,13 @@ from routers.impact_router import router as impact_router
 
 app = FastAPI()
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 app.include_router(ingredients_router)
 app.include_router(plate_router)
